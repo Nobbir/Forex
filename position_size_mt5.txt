@@ -1,0 +1,227 @@
+//+------------------------------------------------------------------+
+//|                                                     pos_size.mq5 |
+//|                                       Copyright 2018, Silverapex |
+//|                                         https://silverapex.co.uk |
+//|                                  mql5 version by Chris Plewright |
+//+------------------------------------------------------------------+
+#property copyright "Copyright 2018, Silverapex"
+#property link      "https://silverapex.co.uk"
+#property version   "B-1.02"
+#property strict
+#property indicator_chart_window
+#property indicator_buffers 1
+#property indicator_plots   0
+
+#include <ChartObjects\ChartObjectsTxtControls.mqh>
+#include <Tools\DateTime.mqh>
+
+input int               InpATRperiod=14;          // ATR Periods
+input double            InpRisk=0.01;            // Risk Size %
+input double            InpSLfactor=1.5;         // Stop Loss as a factor of ATR
+input double            InpTPfactor=1.0;         // Take Profit as a factor of ATR
+input int               InpFontSize=8;          // Font size
+input color             InpColor=clrMagenta;         // Color
+//input ENUM_ANCHOR_POINT InpAnchor=ANCHOR_LEFT;   // Anchor type
+//input bool              InpBack=false;           // Background object
+//input bool              InpSelection=false;      // Highlight to move
+//input bool              InpHidden=true;          // Hidden in the object list
+//input long              InpZOrder=0;             // Priority for mouse click
+
+string AccntC= AccountInfoString(ACCOUNT_CURRENCY); //Currency of Acount eg USD,GBP,EUR
+string CounterC=StringSubstr(Symbol(),3,3);        //The Count Currency eg GBPUSD is USD
+string ExC=AccntC+CounterC;                        //Create the Pair for account eg USDGBP
+
+
+CChartObjectEdit  m_text_labels[];
+int    m_atr_handle;
+double m_atr_buffer[];
+
+//+------------------------------------------------------------------+
+//| Custom indicator initialization function                         |
+//+------------------------------------------------------------------+
+int OnInit()
+  {
+  
+   EventSetMillisecondTimer(1000);
+ 
+   text_init("textATR");
+   text_init("textEQUITY");
+   text_init("textRISK");
+   text_init("texttimeleft");
+   text_init("textlotsize");
+   text_init("textBuySL");
+   text_init("textBuyTP");
+   text_init("textSellSL");
+   text_init("textSellTP");
+
+    //--- Average True Range indicator
+    m_atr_handle=iATR(Symbol(), 0, InpATRperiod );
+    if(m_atr_handle==INVALID_HANDLE) {
+        printf("Error creating ATR indicator");
+        return(INIT_FAILED);
+    }
+    ArraySetAsSeries( m_atr_buffer ,true);
+
+   return(INIT_SUCCEEDED);
+  }
+//+------------------------------------------------------------------+
+//| Custom indicator iteration function                              |
+//+------------------------------------------------------------------+
+int OnCalculate(const int rates_total,
+                const int prev_calculated,
+                const datetime &time[],
+                const double &open[],
+                const double &high[],
+                const double &low[],
+                const double &close[],
+                const long &tick_volume[],
+                const long &volume[],
+                const int &spread[])
+  {
+//---
+   double ExCRate=1;                                            //Assume Account is same as counter so ExCRate=1
+   AccntC=AccountInfoString(ACCOUNT_CURRENCY);// AccountCurrency(); //Currency of Acount eg USD,GBP,EUR
+   CounterC=StringSubstr(Symbol(),3,3);                           //The Count Currency eg GBPUSD is USD
+   ExC=AccntC+CounterC;                                           //Create the Pair for account eg USDGBP
+   if(AccntC!=CounterC)
+      ExCRate= SymbolInfoDouble(ExC,SYMBOL_ASK);                  //Get the correct FX rate for the Account to Counter conversion
+   if(ExCRate ==0) ExCRate=1.0;
+   
+   if(CopyBuffer(m_atr_handle,0,0, 1,m_atr_buffer)!=1) 
+    {
+      Print("CopyBuffer into m_atr_buffer from iATR failed, not enough data yet");
+    }
+   double ATRPrice=m_atr_buffer[0];
+   double ATRPoints=m_atr_buffer[0]/_Point;                         //Get the ATR in points to calc SL and TP
+   double riskVAccntC=AccountInfoDouble(ACCOUNT_EQUITY)*InpRisk;    //Risk in Account Currency
+   double riskvalue=(ExCRate/1)*riskVAccntC;                      //Risk in Counter Currency
+   double slpoints=(ATRPoints*InpSLfactor);                      
+   double riskperpoint=(riskvalue/slpoints);
+   double lotSize=riskperpoint;                                  //Risk in currency per point
+   if(CounterC=="JPY")                                           //Fudge to cope with JPY points being bigger
+      lotSize=riskperpoint/100;
+
+
+   double ask = SymbolInfoDouble(Symbol(), SYMBOL_ASK)/_Point;
+   //double bid = SymbolInfoDouble(Symbol(), SYMBOL_BID)/_Point;
+   
+   double buySLPoints = -1*ATRPoints*InpSLfactor;
+   double buySLPrice = (ask + buySLPoints)*_Point;
+   double buyTPPoints = ATRPoints * InpTPfactor;
+   double buyTPPrice = (ask + buyTPPoints)*_Point;
+   
+   
+   double sellSLPoints = ATRPoints*InpSLfactor;
+   double sellSLPrice = (ask+sellSLPoints)*_Point;
+   double sellTPPoints = -1*ATRPoints*InpTPfactor;
+   double sellTPPrice = (ask+sellTPPoints)*_Point; 
+   
+   text_update("textATR",StringFormat("ATR(%.0f): %.0f pt, %.5f %s",InpATRperiod,ATRPoints,ATRPrice,CounterC ));
+   text_update("textEQUITY",StringFormat("Equity: %.2f %s",AccountInfoDouble(ACCOUNT_EQUITY),AccntC));
+   text_update("textRISK",StringFormat("Risk: %.2f %s %.2f %s",riskVAccntC,AccntC,riskvalue,CounterC));
+   text_update("textlotsize",StringFormat("Volume: %.2f Lots",lotSize));
+   text_update("textBuySL",StringFormat("Buy SL: %.0f pt, %.5f %s",buySLPoints,buySLPrice,CounterC ));
+   text_update("textBuyTP",StringFormat("Buy TP: %.0f pt, %.5f %s",buyTPPoints,buyTPPrice,CounterC ));
+   text_update("textSellSL",StringFormat("Sell SL: %.0f pt, %.5f %s",sellSLPoints,sellSLPrice,CounterC ));
+   text_update("textSellTP",StringFormat("Sell TP: %.0f pt, %.5f %s",sellTPPoints,sellTPPrice,CounterC ));
+
+   upddateTimeLeft();
+
+//--- return value of prev_calculated for next call
+   return(rates_total);
+  }
+  
+//+------------------------------------------------------------------+ 
+//| Timer function                                                   | 
+//+------------------------------------------------------------------+ 
+void OnTimer() 
+  { 
+   upddateTimeLeft();
+   ChartRedraw(ChartID());
+  }
+//+------------------------------------------------------------------+ 
+void upddateTimeLeft() 
+  { 
+   datetime now = TimeCurrent();
+   datetime tm[]; // array storing the bar time
+   ArraySetAsSeries(tm,true);
+   //--- copy time 
+   CopyTime(_Symbol,Period(),0,2,tm);
+
+   int thisbarseconds = (tm[0]-tm[1]);
+
+   int seconds =thisbarseconds -( now - tm[0] ); // seconds left in bar 
+
+   int minutes= MathFloor(seconds/60);
+   int hours  = MathFloor(seconds/3600);
+
+   minutes = minutes - hours*60;
+   seconds = seconds - minutes*60 - hours*3600;
+
+
+   if(Period()<240) text_update("texttimeleft",StringFormat("Time Left: %2.2d:%2.2d",minutes,seconds) );
+   else text_update("texttimeleft",StringFormat("Time Left: %2.2d:%2.2d:%2.2d",hours,minutes,seconds) );
+  }
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+  {
+   for ( int idx = 0; idx < ArraySize(m_text_labels); idx++)
+      {
+       ObjectDelete(ChartID(),m_text_labels[idx].Name());
+      }
+   
+   ArrayFree(m_text_labels);
+   
+   EventKillTimer();
+   
+  }
+//Function to create a text field in the main Window
+int text_init(const string obj_label)
+  {
+   int idx = ArraySize(m_text_labels);
+   ArrayResize( m_text_labels, idx + 1);
+   
+   
+   int width = (int)MathCeil( 41 * InpFontSize );
+   int x_dist = (int)MathCeil( (5 * InpFontSize) + width);
+   int height = (int)MathCeil( 3 + 3*InpFontSize );
+   int y_dist = (int)MathCeil( height * (idx + 1) );
+
+   if( ! m_text_labels[idx].Create(ChartID(),obj_label,0,x_dist,y_dist,width,height) )
+     {
+      Print("Error: can't create label! code #",GetLastError());
+      return(0);
+     }
+   
+   m_text_labels[idx].FontSize(InpFontSize);
+   m_text_labels[idx].Color(InpColor);
+   m_text_labels[idx].BackColor(0xFF000000);
+   m_text_labels[idx].BorderColor( m_text_labels[idx].BackColor() );
+   m_text_labels[idx].ReadOnly(true);
+   m_text_labels[idx].Corner(CORNER_RIGHT_UPPER);
+   m_text_labels[idx].TextAlign( ALIGN_RIGHT );
+   m_text_labels[idx].Anchor(ANCHOR_RIGHT_UPPER);
+   m_text_labels[idx].Fill(false);
+   m_text_labels[idx].Selectable(false);
+   
+   return(0);
+  }
+//+------------------------------------------------------------------+
+int text_update(const string obj_label,const string text )
+  {
+    for ( int idx = 0; idx < ArraySize(m_text_labels); idx++)
+      {
+       if ( m_text_labels[idx].Name() == obj_label )
+         {
+          if ( m_text_labels[idx].Description() != text )
+            {
+             m_text_labels[idx].Description(text);
+             ChartRedraw(ChartID());
+            }   
+          return(0);
+         }
+      }
+      
+   return(1);
+  }
+//+------------------------------------------------------------------+

@@ -6,21 +6,23 @@ total = 0.0
 negs = 0.0
 poss = 0.0
 
-with open("transactions_2017sept21_2018oct21.csv") as csvfile:
-    
+#with open("transactions_2017sept21_2018oct21.csv") as csvfile:
+#with open("transactions_001-001-1968170-001_afterloss.csv") as csvfile:#("transactions_001-001-1968170-001_afterloss.csv") as csvfile:
+with open(r"C:\github\Forex\transactions_1968170_Aug6_2019.csv") as csvfile:
     reader = csv.DictReader(csvfile)
     print(reader)
-##    total_profit = 0.0
-##    profit = 0.0
-##    
-##    for i, row in enumerate(reader):
-##
-##        profit_loss = row['P/L']
-##        if profit_loss:
-##            profit = float(profit_loss)
-##            total_profit += profit
-##            
-##    print(total_profit)
+    total_profit = 0.0
+    profit = 0.0
+    
+    for i, row in enumerate(reader):
+        # ignore until row# 1208
+        # start from row# 1209
+        profit_loss = row['P/L']
+        if profit_loss:
+            profit = float(profit_loss)
+            total_profit += profit
+
+    print(total_profit)
 
 
 """ each row

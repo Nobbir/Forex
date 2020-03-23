@@ -1,0 +1,9 @@
+Auto Trading ===================
+
+Oanda token: Taken on January 10, 2020
+
+595225022d3cc629ba460b1269437522-1e76b548494195b2b97c9495c2aab644
+
+Api URL: https://api-fxpractice.oanda.com
+
+curl -H "Authorization: Bearer 12345678900987654321-abc34135acde13f13530" https://api-fxtrade.oanda.com/v3/accounts

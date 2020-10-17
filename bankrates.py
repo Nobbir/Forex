@@ -27,7 +27,9 @@ trs2 = soup.find_all('tr', {'class': 'tabledata2'})
 trs = trs1 + trs2
 
 banks_analyzed = set()
-rate_dict = {}
+curr_rate_dict = {}
+prev_rate_dict = {}
+
 
 for tr in trs: #soup.find_all('tr', {'class': 'tabledata1'}):
 
@@ -71,11 +73,12 @@ for tr in trs: #soup.find_all('tr', {'class': 'tabledata1'}):
     
     if bank in bank_names and bank in banks_analyzed:
         #print("{}\t: {}".format(d[bank], curr_rate))#, prev_rate))
-        rate_dict[d[bank]] = curr_rate
+        curr_rate_dict[d[bank]] = curr_rate
+        prev_rate_dict[d[bank]] = prev_rate
     #print(rate_dict)
 
-sorted_rates = sorted(rate_dict.items(), key=operator.itemgetter(1))
+sorted_rates = sorted(curr_rate_dict.items(), key=operator.itemgetter(1))
 #print(sorted_rates)
-
+print("Pair\t: curr\t prev")
 for k, v in sorted_rates: #.items():
-    print("{}\t: {}".format(k, v))
+    print("{}\t: {}\t {}".format(k, v, prev_rate_dict[k]))

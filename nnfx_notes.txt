@@ -1,0 +1,9 @@
+Before NNFx Trading
+Forex Manual backtesting
+Forex.com fAQs: min trade: 1000 units, deposit: 2500
+DailyFx - forex market news and analysis.
+Three easy ways to Exit a tread from DailyFx
+LiteForex library of strategies.
+Bollinger strategy (PRINT it)
+Forex Rejection technique - tradecity.com
+Bollinger and price rejection - simplified

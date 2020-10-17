@@ -1,4 +1,4 @@
-Ticket,Date,Timezone,Transaction,Details,Instrument,Price,Units,Direction,Spread Cost,Stop Loss,Take Profit,Trailing Stop,Financing,Commission,Conversion Rate,P/L,Amount,Balance
+Ticket,Date,Timezone,Transaction,Details,Instrument,Price,Units,Direction,Spread Cost,Stop Loss,Take Profit,Trailing Stop,Financing,Commission,Conversion Rate,PL,Amount,Balance
 1,04/09/2018 04:04:25 PM,PDT,CREATE,,,,,,,,,,,,,,,
 2,04/09/2018 04:04:25 PM,PDT,CLIENT_CONFIGURE,,,,,,,,,,,,,,,
 3,04/09/2018 04:32:18 PM,PDT,TRANSFER_FUNDS,,,,,,,,,,,,,,500.00,500.00

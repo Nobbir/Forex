@@ -21,32 +21,59 @@ odict_keys = (['Ticket',
             'Trailing Stop',
             'Financing',
             'Commission',
-            'P/L',
+            'PL',
             'Amount',
             'Balance'])
 
 transactions = set()
-
-with open("transactions_2017sept21_2018oct21.csv") as csvfile:
-    
-    reader = csv.DictReader(csvfile)
+# transactions_001-001-1968170-001-1
+#with open("transactions_10172020.csv") as csvfile:
+with open(r"C:\\github\\Forex\\transactions_001-001-1968170-001-1.csv") as csvfile:
+    # csv.DictReader(csvfile)
+    csv_reader = csv.DictReader(csvfile)#csv.reader(csvfile)
     total_P_L = 0.0
     total_financing = 0.0
     
-    for i, row in enumerate(reader):
+    funds = 0.0
+    deposits = 0.0
+    withdrawals = 0.0
 
-        if row['P/L']:
-            if float(row['P/L']) > 0.0875:
-                #print(row['P/L'])
-                total_P_L = total_P_L + float(row['P/L'])
+    for i, row in enumerate(csv_reader):
+        if i == 0: continue
+        
+        # transaction = row[3]   # Transactions TRANSFER_FUNDS, TAKE_PROFIT, DAILY_FINANCING
+        # if transaction == 'TRANSFER_FUNDS':
+        #     trans = int(transaction)
+
+        if not row[17]:
+            continue
+        else:
+            amount = float(row[17])
+            if amount < 0:
+                withdrawals += amount
+            else:
+                #amount = float(amount.strip())
+                deposits += amount
+
+        if not row[16]:
+            continue
+        else:
+            pl = float(row[16])
+            if pl > 0.01:
+                #print("PL = ".format(pl))#format(float(row[16])))
+                total_P_L = total_P_L + float(row[16])  # Profit-Loss
                 #total += transaction
                 
-        if row['Financing']:
-            financing = float(row['Financing'])
+        if row[13]:#['Financing']:
+            financing = float(row[13])   # Financing
             total_financing += financing
 
-    print(total_financing)
-    print(total_P_L)
+    print("Deposits    = {}".format(deposits))
+    print("Withdrawals = {}".format(withdrawals))
+    print("***************************************")
+    print("Total financing: {}".format(total_financing))
+    print("Overall deposit: {}".format(deposits))
+    print("Total PL       : {}".format(total_P_L))
     
 ##        if i > 3:
 ##            

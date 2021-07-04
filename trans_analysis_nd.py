@@ -1,7 +1,27 @@
 import os
 import sys
 import csv
-
+"""
+1  : Ticket
+2  : Date
+3  : Timezone
+4  : Transaction
+5  : Details
+6  : Instrument
+7  : Price
+8  : Units
+9  : Direction
+10  : Spread Cost
+11  : Stop Loss
+12  : Take Profit
+13  : Trailing Stop
+14  : Financing
+15  : Commission
+16  : Conversion Rate
+17  : P/L
+18  : Amount
+19  : Balance
+"""
 total = 0.0
 negs = 0.0
 poss = 0.0
@@ -10,26 +30,46 @@ poss = 0.0
 #with open("transactions_001-001-1968170-001_afterloss.csv") as csvfile:#("transactions_001-001-1968170-001_afterloss.csv") as csvfile:
 #with open(r"C:\github\Forex\transactions_1968170_Aug6_2019.csv") as csvfile:
 
-csvfile = r"C:\github\Forex\transactions_10172020.csv"
+csvfile = r"C:\github\Forex\transactions_shapla_jan4.csv"
+#csvfile = r"C:\github\Forex\nd_primary" transactions_shapla_jan4.csv
+csvfile = r"C:\github\Forex\transactions_farn.csv"
 
-with open(csvfile):
+with open(csvfile, mode='r') as fxfile:
 
-    reader = csv.DictReader(csvfile)
-    print(reader)
-    total_profit = 0.0
-    profit = 0.0
-    
-    for i, row in enumerate(reader):
-        # ignore until row# 1208
-        # start from row# 1209
-        try:
-            profit_loss = row['PL']
-        except:
+    total_financing = 0
+
+    try:
+        csv_reader = csv.reader(fxfile)
+        #print(reader)
+        total_profit = 0.0
+        profit = 0.0
+        profit_loss = None
+
+        for i, row in enumerate(csv_reader):
+
+            if i == 0: continue
+            """ for i, r in enumerate(row):
+                    print("{}  : {}".format(i+1, r)) """
+            # ignore until row# 1208
+            # start from row# 1209
+            try:
+                #profit_loss = row['PL']
+                #financing = row[13]
+                financing = float(row[13])
+                if financing:
+                    #print(type(financing))
+                    total_financing += financing
+                    #print(float(total_financing))
+            except:
+                continue
+
             if profit_loss:
                 profit = float(profit_loss)
                 total_profit += profit
-
-    print(total_profit)
+    except Exception as ex:
+        print(ex.args[0])
+        
+    print(round(float(total_financing), 2))
 
 
 """ each row
